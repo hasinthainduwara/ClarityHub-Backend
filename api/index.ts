@@ -12,6 +12,7 @@ dotenv.config();
 // Import routes
 import authRoutes from "../src/routes/authRoutes";
 import userRoutes from "../src/routes/userRoutes";
+import postRoutes from "../src/routes/postRoutes";
 import { errorHandler } from "../src/middleware/errorHandler";
 
 const app = express();
@@ -26,7 +27,12 @@ const limiter = rateLimit({
 });
 
 // Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 app.use(compression());
 app.use(limiter);
 app.use(
@@ -34,7 +40,7 @@ app.use(
     origin: process.env.CORS_ORIGIN || "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 app.use(express.json({ limit: "10mb" }));
@@ -108,6 +114,7 @@ app.get("/", (req, res) => {
       health: "/health",
       auth: "/api/auth",
       users: "/api/users",
+      posts: "/api/posts",
     },
   });
 });
@@ -115,6 +122,7 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
