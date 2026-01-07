@@ -1,31 +1,27 @@
-import { Response, NextFunction } from 'express';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import { User } from '../models/User';
-import { AuthenticatedRequest } from '../middleware/auth';
+import { Response, NextFunction } from "express";
+import jwt, { SignOptions } from "jsonwebtoken";
+import { User } from "../models/User";
+import { AuthenticatedRequest } from "../middleware/auth";
 
 // Generate JWT tokens
 const generateToken = (userId: string): string => {
   if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined');
+    throw new Error("JWT_SECRET is not defined");
   }
-  
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions
-  );
+
+  return jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  } as SignOptions);
 };
 
 const generateRefreshToken = (userId: string): string => {
   if (!process.env.JWT_REFRESH_SECRET) {
-    throw new Error('JWT_REFRESH_SECRET is not defined');
+    throw new Error("JWT_REFRESH_SECRET is not defined");
   }
-  
-  return jwt.sign(
-    { userId },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' } as SignOptions
-  );
+
+  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
+  } as SignOptions);
 };
 
 // @desc    Register a new user
@@ -43,7 +39,7 @@ export const signup = async (
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(400).json({
-        error: 'User with this email already exists',
+        error: "User with this email already exists",
       });
       return;
     }
@@ -62,7 +58,7 @@ export const signup = async (
     const refreshToken = generateRefreshToken(user._id);
 
     res.status(201).json({
-      message: 'User created successfully',
+      message: "User created successfully",
       token,
       refreshToken,
       user: {
@@ -91,11 +87,11 @@ export const login = async (
     const { email, password } = req.body;
 
     // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password');
-    
+    const user = await User.findOne({ email }).select("+password");
+
     if (!user || !user.isActive) {
       res.status(401).json({
-        error: 'Invalid credentials',
+        error: "Invalid credentials",
       });
       return;
     }
@@ -104,7 +100,7 @@ export const login = async (
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       res.status(401).json({
-        error: 'Invalid credentials',
+        error: "Invalid credentials",
       });
       return;
     }
@@ -114,7 +110,7 @@ export const login = async (
     const refreshToken = generateRefreshToken(user._id);
 
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       refreshToken,
       user: {
@@ -142,7 +138,7 @@ export const getProfile = async (
   try {
     if (!req.user) {
       res.status(401).json({
-        error: 'User not authenticated',
+        error: "User not authenticated",
       });
       return;
     }
@@ -174,19 +170,19 @@ export const updateProfile = async (
   try {
     if (!req.user) {
       res.status(401).json({
-        error: 'User not authenticated',
+        error: "User not authenticated",
       });
       return;
     }
 
     const { name, email } = req.body;
-    
+
     // Check if email is already taken by another user
     if (email && email !== req.user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         res.status(400).json({
-          error: 'Email already in use',
+          error: "Email already in use",
         });
         return;
       }
@@ -201,13 +197,13 @@ export const updateProfile = async (
 
     if (!updatedUser) {
       res.status(404).json({
-        error: 'User not found',
+        error: "User not found",
       });
       return;
     }
 
     res.json({
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       user: {
         id: updatedUser._id,
         name: updatedUser.name,
@@ -234,7 +230,7 @@ export const changePassword = async (
   try {
     if (!req.user) {
       res.status(401).json({
-        error: 'User not authenticated',
+        error: "User not authenticated",
       });
       return;
     }
@@ -242,10 +238,10 @@ export const changePassword = async (
     const { currentPassword, newPassword } = req.body;
 
     // Get user with password
-    const user = await User.findById(req.user._id).select('+password');
+    const user = await User.findById(req.user._id).select("+password");
     if (!user) {
       res.status(404).json({
-        error: 'User not found',
+        error: "User not found",
       });
       return;
     }
@@ -254,7 +250,7 @@ export const changePassword = async (
     const isPasswordValid = await user.comparePassword(currentPassword);
     if (!isPasswordValid) {
       res.status(400).json({
-        error: 'Current password is incorrect',
+        error: "Current password is incorrect",
       });
       return;
     }
@@ -264,7 +260,7 @@ export const changePassword = async (
     await user.save();
 
     res.json({
-      message: 'Password changed successfully',
+      message: "Password changed successfully",
     });
   } catch (error) {
     next(error);
@@ -284,23 +280,25 @@ export const refreshToken = async (
 
     if (!token) {
       res.status(400).json({
-        error: 'Refresh token is required',
+        error: "Refresh token is required",
       });
       return;
     }
 
     if (!process.env.JWT_REFRESH_SECRET) {
-      throw new Error('JWT_REFRESH_SECRET is not defined');
+      throw new Error("JWT_REFRESH_SECRET is not defined");
     }
 
     // Verify refresh token
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET) as {
+      userId: string;
+    };
 
     // Check if user still exists
     const user = await User.findById(decoded.userId);
     if (!user || !user.isActive) {
       res.status(401).json({
-        error: 'User not found or inactive',
+        error: "User not found or inactive",
       });
       return;
     }
@@ -309,12 +307,12 @@ export const refreshToken = async (
     const newAccessToken = generateToken(user._id);
 
     res.json({
-      message: 'Token refreshed successfully',
+      message: "Token refreshed successfully",
       token: newAccessToken,
     });
   } catch (error) {
     res.status(401).json({
-      error: 'Invalid or expired refresh token',
+      error: "Invalid or expired refresh token",
     });
   }
 };
@@ -331,9 +329,9 @@ export const logout = async (
     // In a stateless JWT implementation, logout is handled client-side
     // by removing the token. However, we can still provide a logout endpoint
     // for consistency and potential token blacklisting in the future.
-    
+
     res.json({
-      message: 'Logout successful',
+      message: "Logout successful",
     });
   } catch (error) {
     next(error);

@@ -42,22 +42,26 @@ A robust TypeScript Express.js backend with MongoDB for user authentication and 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd clarityhub-backend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create environment file:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Update the `.env` file with your configuration:
+
 ```env
 NODE_ENV=development
 PORT=5000
@@ -72,11 +76,13 @@ RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 **Note**: Generate secure JWT secrets using:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 5. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -91,31 +97,33 @@ For detailed information about the authentication system, including all endpoint
 
 ### Authentication Routes
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/api/auth/signup` | Register new user | Public |
-| POST | `/api/auth/login` | User login | Public |
-| GET | `/api/auth/profile` | Get user profile | Private |
-| PUT | `/api/auth/profile` | Update user profile | Private |
-| POST | `/api/auth/change-password` | Change password | Private |
-| POST | `/api/auth/refresh` | Refresh access token | Public |
-| POST | `/api/auth/logout` | Logout user | Private |
+| Method | Endpoint                    | Description          | Access  |
+| ------ | --------------------------- | -------------------- | ------- |
+| POST   | `/api/auth/signup`          | Register new user    | Public  |
+| POST   | `/api/auth/login`           | User login           | Public  |
+| GET    | `/api/auth/profile`         | Get user profile     | Private |
+| PUT    | `/api/auth/profile`         | Update user profile  | Private |
+| POST   | `/api/auth/change-password` | Change password      | Private |
+| POST   | `/api/auth/refresh`         | Refresh access token | Public  |
+| POST   | `/api/auth/logout`          | Logout user          | Private |
 
 ### User Management Routes
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/api/users` | Get all users | Admin Only |
-| GET | `/api/users/:id` | Get user by ID | Admin or Own Profile |
-| PUT | `/api/users/:id` | Update user | Admin or Own Profile |
-| DELETE | `/api/users/:id` | Delete user | Admin Only |
+| Method | Endpoint         | Description    | Access               |
+| ------ | ---------------- | -------------- | -------------------- |
+| GET    | `/api/users`     | Get all users  | Admin Only           |
+| GET    | `/api/users/:id` | Get user by ID | Admin or Own Profile |
+| PUT    | `/api/users/:id` | Update user    | Admin or Own Profile |
+| DELETE | `/api/users/:id` | Delete user    | Admin Only           |
 
 ## Postman Collection
 
 ### Version 2 (Recommended - With Token Authentication)
+
 The V2 collection includes automatic token management and all new authentication endpoints.
 
 **Quick Setup:**
+
 1. Import the Postman collection: `ClarityHub-API-v2.postman_collection.json`
 2. Import the environment: `ClarityHub-Local-v2.postman_environment.json`
 3. Select the "ClarityHub Local" environment in Postman
@@ -129,6 +137,7 @@ The V2 collection includes automatic token management and all new authentication
    - **Logout** - Clears all tokens
 
 **Features:**
+
 - ✅ Automatic token management
 - ✅ Tokens saved after login/signup
 - ✅ Tokens cleared after logout
@@ -140,16 +149,19 @@ The V2 collection includes automatic token management and all new authentication
 **Documentation:** See [POSTMAN_GUIDE_V2.md](./POSTMAN_GUIDE_V2.md) for complete guide.
 
 ### Version 1 (Legacy)
+
 Original collection: `ClarityHub-Backend.postman_collection.json`
 
 For detailed testing instructions, see [POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md) or [POSTMAN_GUIDE_V2.md](./POSTMAN_GUIDE_V2.md).
-   - Health Check
-   - User Signup (saves JWT token automatically)
-   - User Login
-   - Get Profile
-   - Other authenticated endpoints
+
+- Health Check
+- User Signup (saves JWT token automatically)
+- User Login
+- Get Profile
+- Other authenticated endpoints
 
 ### Collection Features
+
 - ✅ **Automated token management** - JWT tokens are automatically extracted and stored
 - ✅ **Complete test coverage** - Every endpoint has response validation tests
 - ✅ **Error scenarios** - Tests for validation errors, unauthorized access, etc.
@@ -157,12 +169,14 @@ For detailed testing instructions, see [POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md) or
 - ✅ **Admin operations** - Separate admin user creation and management endpoints
 
 ### Available Environments
+
 - **Local Development**: `ClarityHub-Local.postman_environment.json`
 - **Production**: `ClarityHub-Production.postman_environment.json`
 
 ## API Usage Examples
 
 ### Register a new user
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/signup \
   -H "Content-Type: application/json" \
@@ -174,6 +188,7 @@ curl -X POST http://localhost:3000/api/auth/signup \
 ```
 
 ### Login
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -184,6 +199,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 ### Access protected route
+
 ```bash
 curl -X GET http://localhost:3000/api/auth/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
@@ -223,14 +239,14 @@ src/
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `development` |
-| `PORT` | Server port | `3000` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/clarityhub` |
-| `JWT_SECRET` | JWT signing secret | Required |
-| `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
-| `CORS_ORIGIN` | Allowed CORS origin | `http://localhost:3000` |
+| Variable         | Description               | Default                                |
+| ---------------- | ------------------------- | -------------------------------------- |
+| `NODE_ENV`       | Environment mode          | `development`                          |
+| `PORT`           | Server port               | `3000`                                 |
+| `MONGODB_URI`    | MongoDB connection string | `mongodb://localhost:27017/clarityhub` |
+| `JWT_SECRET`     | JWT signing secret        | Required                               |
+| `JWT_EXPIRES_IN` | JWT expiration time       | `7d`                                   |
+| `CORS_ORIGIN`    | Allowed CORS origin       | `http://localhost:3000`                |
 
 ## Error Handling
 
@@ -244,6 +260,7 @@ The API uses consistent error response format:
 ```
 
 Common HTTP status codes:
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request
