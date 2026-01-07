@@ -51,14 +51,24 @@ const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGODB_URI;
     if (!mongoUri) {
+      console.error("MONGODB_URI environment variable is not defined");
       throw new Error("MONGODB_URI is not defined");
     }
 
-    await mongoose.connect(mongoUri);
+    // Log connection attempt (without exposing credentials)
+    console.log("Attempting MongoDB connection...");
+    console.log("URI starts with:", mongoUri.substring(0, 20) + "...");
+
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000, // 10 second timeout
+      socketTimeoutMS: 45000,
+    });
+
     isConnected = true;
-    console.log("MongoDB connected");
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.log("MongoDB connected successfully");
+  } catch (error: any) {
+    console.error("MongoDB connection error:", error.message);
+    console.error("Full error:", JSON.stringify(error, null, 2));
     throw error;
   }
 };
@@ -68,8 +78,13 @@ app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
-  } catch (error) {
-    res.status(500).json({ error: "Database connection failed" });
+  } catch (error: any) {
+    console.error("DB middleware error:", error.message);
+    res.status(500).json({
+      error: "Database connection failed",
+      message: error.message || "Unknown error",
+      hint: "Check MONGODB_URI env var and MongoDB Atlas IP whitelist",
+    });
   }
 });
 
