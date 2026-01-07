@@ -9,6 +9,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import userRoutes from "./routes/userRoutes";
 import authRoutes from "./routes/authRoutes";
 import postRoutes from "./routes/postRoutes";
+import professionalRoutes from "./routes/professionalRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +80,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/professionals", professionalRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
