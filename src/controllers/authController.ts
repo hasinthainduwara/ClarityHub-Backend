@@ -1,7 +1,11 @@
-import { Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import jwt, { SignOptions } from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import { User } from "../models/User";
-import { AuthenticatedRequest } from "../middleware/auth";
+import "../types/express"; // Import to extend Express Request
+
+// Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT tokens
 const generateToken = (userId: string): string => {
@@ -28,7 +32,7 @@ const generateRefreshToken = (userId: string): string => {
 // @route   POST /api/auth/signup
 // @access  Public
 export const signup = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -79,7 +83,7 @@ export const signup = async (
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -131,7 +135,7 @@ export const login = async (
 // @route   GET /api/auth/profile
 // @access  Private
 export const getProfile = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -163,7 +167,7 @@ export const getProfile = async (
 // @route   PUT /api/auth/profile
 // @access  Private
 export const updateProfile = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -223,7 +227,7 @@ export const updateProfile = async (
 // @route   POST /api/auth/change-password
 // @access  Private
 export const changePassword = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -271,7 +275,7 @@ export const changePassword = async (
 // @route   POST /api/auth/refresh
 // @access  Public
 export const refreshToken = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -321,7 +325,7 @@ export const refreshToken = async (
 // @route   POST /api/auth/logout
 // @access  Private
 export const logout = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -335,5 +339,109 @@ export const logout = async (
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Google OAuth authentication
+// @route   POST /api/auth/google
+// @access  Public
+export const googleAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      res.status(400).json({
+        error: "Google credential is required",
+      });
+      return;
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      res.status(400).json({
+        error: "Invalid Google token",
+      });
+      return;
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email) {
+      res.status(400).json({
+        error: "Email not provided by Google",
+      });
+      return;
+    }
+
+    // Check if user exists with this Google ID
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if user exists with same email (local account)
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link Google account to existing local account
+        user.googleId = googleId;
+        user.avatar = picture;
+        if (!user.authProvider || user.authProvider === "local") {
+          // Keep as local but add Google ID for future Google logins
+        }
+        await user.save();
+      } else {
+        // Create new user with Google account
+        user = new User({
+          name: name || email.split("@")[0],
+          email,
+          googleId,
+          avatar: picture,
+          authProvider: "google",
+        });
+        await user.save();
+      }
+    }
+
+    if (!user.isActive) {
+      res.status(401).json({
+        error: "Account is deactivated",
+      });
+      return;
+    }
+
+    // Generate tokens
+    const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    res.json({
+      message: "Google authentication successful",
+      token,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+        isActive: user.isActive,
+        authProvider: user.authProvider,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(401).json({
+      error: "Google authentication failed",
+    });
   }
 };

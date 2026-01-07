@@ -1,12 +1,12 @@
-import { Response, NextFunction } from 'express';
-import { User } from '../models/User';
-import { AuthenticatedRequest } from '../middleware/auth';
+import { Request, Response, NextFunction } from "express";
+import { User } from "../models/User";
+import "../types/express"; // Import to extend Express Request
 
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Private (Admin only)
 export const getAllUsers = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -42,26 +42,26 @@ export const getAllUsers = async (
 // @route   GET /api/users/:id
 // @access  Private (Admin or own profile)
 export const getUserById = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    
+
     // Check if user is admin or accessing their own profile
-    if (req.user?.role !== 'admin' && req.user?._id !== id) {
+    if (req.user?.role !== "admin" && req.user?._id !== id) {
       res.status(403).json({
-        error: 'Access denied. You can only view your own profile.',
+        error: "Access denied. You can only view your own profile.",
       });
       return;
     }
 
     const user = await User.findById(id);
-    
+
     if (!user) {
       res.status(404).json({
-        error: 'User not found',
+        error: "User not found",
       });
       return;
     }
@@ -76,29 +76,29 @@ export const getUserById = async (
 // @route   PUT /api/users/:id
 // @access  Private (Admin or own profile)
 export const updateUser = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, email, role, isActive } = req.body;
-    
+
     // Check if user is admin or updating their own profile
-    const isAdmin = req.user?.role === 'admin';
+    const isAdmin = req.user?.role === "admin";
     const isOwnProfile = req.user?._id === id;
-    
+
     if (!isAdmin && !isOwnProfile) {
       res.status(403).json({
-        error: 'Access denied. You can only update your own profile.',
+        error: "Access denied. You can only update your own profile.",
       });
       return;
     }
-    
+
     // Non-admin users cannot change role or isActive status
     if (!isAdmin && (role !== undefined || isActive !== undefined)) {
       res.status(403).json({
-        error: 'Access denied. Only admins can change role or active status.',
+        error: "Access denied. Only admins can change role or active status.",
       });
       return;
     }
@@ -108,7 +108,7 @@ export const updateUser = async (
       const existingUser = await User.findOne({ email, _id: { $ne: id } });
       if (existingUser) {
         res.status(400).json({
-          error: 'Email already in use',
+          error: "Email already in use",
         });
         return;
       }
@@ -121,21 +121,20 @@ export const updateUser = async (
     if (isAdmin && role !== undefined) updateData.role = role;
     if (isAdmin && isActive !== undefined) updateData.isActive = isActive;
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedUser) {
       res.status(404).json({
-        error: 'User not found',
+        error: "User not found",
       });
       return;
     }
 
     res.json({
-      message: 'User updated successfully',
+      message: "User updated successfully",
       user: updatedUser,
     });
   } catch (error) {
@@ -147,7 +146,7 @@ export const updateUser = async (
 // @route   DELETE /api/users/:id
 // @access  Private (Admin only)
 export const deleteUser = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -157,16 +156,16 @@ export const deleteUser = async (
     // Prevent admin from deleting themselves
     if (req.user?._id === id) {
       res.status(400).json({
-        error: 'You cannot delete your own account',
+        error: "You cannot delete your own account",
       });
       return;
     }
 
     const user = await User.findById(id);
-    
+
     if (!user) {
       res.status(404).json({
-        error: 'User not found',
+        error: "User not found",
       });
       return;
     }
@@ -174,7 +173,7 @@ export const deleteUser = async (
     await User.findByIdAndDelete(id);
 
     res.json({
-      message: 'User deleted successfully',
+      message: "User deleted successfully",
     });
   } catch (error) {
     next(error);

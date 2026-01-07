@@ -8,6 +8,7 @@ import {
   changePassword,
   refreshToken,
   logout,
+  googleAuth,
 } from "../controllers/authController";
 import { authenticate } from "../middleware/auth";
 import { validateRequest } from "../middleware/validation";
@@ -83,5 +84,6 @@ router.post(
 );
 router.post("/refresh", refreshTokenValidation, validateRequest, refreshToken);
 router.post("/logout", authenticate, logout);
+router.post("/google", googleAuth);
 
 export default router;
