@@ -3,7 +3,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-// Generate JWT token
+// Generate JWT tokens
 const generateToken = (userId: string): string => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not defined');
@@ -12,7 +12,19 @@ const generateToken = (userId: string): string => {
   return jwt.sign(
     { userId },
     process.env.JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions
+  );
+};
+
+const generateRefreshToken = (userId: string): string => {
+  if (!process.env.JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET is not defined');
+  }
+  
+  return jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' } as SignOptions
   );
 };
 
@@ -45,12 +57,14 @@ export const signup = async (
 
     await user.save();
 
-    // Generate token
+    // Generate tokens
     const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
     res.status(201).json({
       message: 'User created successfully',
       token,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -95,12 +109,14 @@ export const login = async (
       return;
     }
 
-    // Generate token
+    // Generate tokens
     const token = generateToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
     res.json({
       message: 'Login successful',
       token,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -201,6 +217,123 @@ export const updateProfile = async (
         createdAt: updatedUser.createdAt,
         updatedAt: updatedUser.updatedAt,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Change password
+// @route   POST /api/auth/change-password
+// @access  Private
+export const changePassword = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        error: 'User not authenticated',
+      });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Get user with password
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      res.status(404).json({
+        error: 'User not found',
+      });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      res.status(400).json({
+        error: 'Current password is incorrect',
+      });
+      return;
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+// @access  Public
+export const refreshToken = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { refreshToken: token } = req.body;
+
+    if (!token) {
+      res.status(400).json({
+        error: 'Refresh token is required',
+      });
+      return;
+    }
+
+    if (!process.env.JWT_REFRESH_SECRET) {
+      throw new Error('JWT_REFRESH_SECRET is not defined');
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET) as { userId: string };
+
+    // Check if user still exists
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        error: 'User not found or inactive',
+      });
+      return;
+    }
+
+    // Generate new access token
+    const newAccessToken = generateToken(user._id);
+
+    res.json({
+      message: 'Token refreshed successfully',
+      token: newAccessToken,
+    });
+  } catch (error) {
+    res.status(401).json({
+      error: 'Invalid or expired refresh token',
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+export const logout = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // In a stateless JWT implementation, logout is handled client-side
+    // by removing the token. However, we can still provide a logout endpoint
+    // for consistency and potential token blacklisting in the future.
+    
+    res.json({
+      message: 'Logout successful',
     });
   } catch (error) {
     next(error);

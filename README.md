@@ -5,7 +5,10 @@ A robust TypeScript Express.js backend with MongoDB for user authentication and 
 ## Features
 
 - 🔐 User Authentication (Signup/Login)
-- 👤 User Profile Management
+- � Access & Refresh Tokens
+- 🔑 Password Change Functionality
+- 🚪 Logout Support
+- �👤 User Profile Management
 - 🛡️ JWT-based Authorization
 - 🔒 Role-based Access Control (User/Admin)
 - 📊 User CRUD Operations
@@ -57,11 +60,20 @@ cp .env.example .env
 4. Update the `.env` file with your configuration:
 ```env
 NODE_ENV=development
-PORT=3000
+PORT=5000
 MONGODB_URI=mongodb://localhost:27017/clarityhub
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000
+JWT_REFRESH_SECRET=your-super-secret-jwt-refresh-key-change-this-in-production
+JWT_REFRESH_EXPIRES_IN=30d
+CORS_ORIGIN=http://localhost:5173
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+**Note**: Generate secure JWT secrets using:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 5. Start the development server:
@@ -69,7 +81,11 @@ CORS_ORIGIN=http://localhost:3000
 npm run dev
 ```
 
-The server will be running at `http://localhost:3000`
+The server will be running at `http://localhost:5000`
+
+## Authentication
+
+For detailed information about the authentication system, including all endpoints, token management, and security best practices, see [AUTHENTICATION.md](./AUTHENTICATION.md).
 
 ## API Endpoints
 
@@ -81,6 +97,9 @@ The server will be running at `http://localhost:3000`
 | POST | `/api/auth/login` | User login | Public |
 | GET | `/api/auth/profile` | Get user profile | Private |
 | PUT | `/api/auth/profile` | Update user profile | Private |
+| POST | `/api/auth/change-password` | Change password | Private |
+| POST | `/api/auth/refresh` | Refresh access token | Public |
+| POST | `/api/auth/logout` | Logout user | Private |
 
 ### User Management Routes
 
@@ -93,11 +112,37 @@ The server will be running at `http://localhost:3000`
 
 ## Postman Collection
 
-### Quick Setup
-1. Import the Postman collection: `ClarityHub-Backend.postman_collection.json`
-2. Import the environment: `ClarityHub-Local.postman_environment.json`
-3. Select the "ClarityHub Local Environment" in Postman
-4. Run the requests in the following order:
+### Version 2 (Recommended - With Token Authentication)
+The V2 collection includes automatic token management and all new authentication endpoints.
+
+**Quick Setup:**
+1. Import the Postman collection: `ClarityHub-API-v2.postman_collection.json`
+2. Import the environment: `ClarityHub-Local-v2.postman_environment.json`
+3. Select the "ClarityHub Local" environment in Postman
+4. Start your backend server: `npm run dev`
+5. Test the authentication flow:
+   - **Sign Up** - Creates account and saves tokens automatically
+   - **Get Profile** - Retrieves your profile (uses saved token)
+   - **Update Profile** - Modify your information
+   - **Change Password** - Update your password
+   - **Refresh Token** - Get new access token
+   - **Logout** - Clears all tokens
+
+**Features:**
+- ✅ Automatic token management
+- ✅ Tokens saved after login/signup
+- ✅ Tokens cleared after logout
+- ✅ Bearer authentication pre-configured
+- ✅ All 7 auth endpoints included
+- ✅ User management endpoints
+- ✅ Response examples for each request
+
+**Documentation:** See [POSTMAN_GUIDE_V2.md](./POSTMAN_GUIDE_V2.md) for complete guide.
+
+### Version 1 (Legacy)
+Original collection: `ClarityHub-Backend.postman_collection.json`
+
+For detailed testing instructions, see [POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md) or [POSTMAN_GUIDE_V2.md](./POSTMAN_GUIDE_V2.md).
    - Health Check
    - User Signup (saves JWT token automatically)
    - User Login
