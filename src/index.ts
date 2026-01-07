@@ -42,9 +42,16 @@ app.use(
       ];
 
       if (process.env.CORS_ORIGIN) {
-        allowedOrigins.push(process.env.CORS_ORIGIN);
+        if (process.env.CORS_ORIGIN.includes(",")) {
+          allowedOrigins.push(
+            ...process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+          );
+        } else {
+          allowedOrigins.push(process.env.CORS_ORIGIN);
+        }
       }
 
+      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
