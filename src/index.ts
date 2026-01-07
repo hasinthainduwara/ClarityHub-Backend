@@ -10,6 +10,7 @@ import userRoutes from "./routes/userRoutes";
 import authRoutes from "./routes/authRoutes";
 import postRoutes from "./routes/postRoutes";
 import professionalRoutes from "./routes/professionalRoutes";
+import commentRoutes from "./routes/commentRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -81,6 +82,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/professionals", professionalRoutes);
+app.use("/api/comments", commentRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
