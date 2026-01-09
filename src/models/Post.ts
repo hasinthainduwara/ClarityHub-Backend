@@ -28,7 +28,7 @@ const postSchema = new Schema<IPost>(
     content: {
       type: String,
       required: [true, "Post content is required"],
-      maxlength: [2000, "Post content cannot exceed 2000 characters"],
+      maxlength: [10000, "Post content cannot exceed 10000 characters"],
       trim: true,
     },
     category: {
