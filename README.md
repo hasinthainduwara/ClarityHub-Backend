@@ -116,25 +116,34 @@ For detailed information about the authentication system, including all endpoint
 | PUT    | `/api/users/:id` | Update user    | Admin or Own Profile |
 | DELETE | `/api/users/:id` | Delete user    | Admin Only           |
 
+### Community Routes
+
+| Method | Endpoint                        | Description                   | Access  |
+| ------ | ------------------------------- | ----------------------------- | ------- |
+| POST   | `/api/communities`              | Create new community          | Private |
+| GET    | `/api/communities`              | List communities              | Private |
+| GET    | `/api/communities/my-communities`| Get my joined communities    | Private |
+| GET    | `/api/communities/:id`          | Get community details         | Private |
+| POST   | `/api/communities/:id/join`     | Join community (follow)       | Private |
+| POST   | `/api/communities/:id/leave`    | Leave community (unfollow)    | Private |
+| POST   | `/api/communities/:id/posts`    | Create post in community      | Private |
+| GET    | `/api/communities/:id/posts`    | Get posts in community        | Private |
+
 ## Postman Collection
 
-### Version 2 (Recommended - With Token Authentication)
+### Version 3 (Latest - With Community Features)
 
-The V2 collection includes automatic token management and all new authentication endpoints.
+The V3 collection includes all previous features plus new Community API endpoints.
 
 **Quick Setup:**
 
-1. Import the Postman collection: `ClarityHub-API-v2.postman_collection.json`
-2. Import the environment: `ClarityHub-Local-v2.postman_environment.json`
-3. Select the "ClarityHub Local" environment in Postman
-4. Start your backend server: `npm run dev`
-5. Test the authentication flow:
+1. Import the Postman collection: `ClarityHub-API-v3.postman_collection.json`
+2. Configure `baseUrl` variable to `http://localhost:3000`
+3. Start your backend server: `npm run dev`
+4. Test the authentication flow to get your token set automatically.
    - **Sign Up** - Creates account and saves tokens automatically
    - **Get Profile** - Retrieves your profile (uses saved token)
-   - **Update Profile** - Modify your information
-   - **Change Password** - Update your password
-   - **Refresh Token** - Get new access token
-   - **Logout** - Clears all tokens
+   - **Community Endpoints** - Create, Join, and post in communities
 
 **Features:**
 

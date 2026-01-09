@@ -12,6 +12,7 @@ export interface IPost extends Document {
   mood?: string;
   likes: mongoose.Types.ObjectId[];
   bookmarks: mongoose.Types.ObjectId[];
+  community?: mongoose.Types.ObjectId;
   commentsCount: number;
   isAnonymous: boolean;
   createdAt: Date;
@@ -68,6 +69,10 @@ const postSchema = new Schema<IPost>(
         ref: "User",
       },
     ],
+    community: {
+      type: Schema.Types.ObjectId,
+      ref: "Community",
+    },
     commentsCount: {
       type: Number,
       default: 0,

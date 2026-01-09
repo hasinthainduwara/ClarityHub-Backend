@@ -12,6 +12,7 @@ import postRoutes from "./routes/postRoutes";
 import professionalRoutes from "./routes/professionalRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import moodRoutes from "./routes/moodRoutes";
+import communityRoutes from "./routes/communityRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -85,6 +86,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/professionals", professionalRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/mood", moodRoutes);
+app.use("/api/communities", communityRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
