@@ -8,7 +8,7 @@ export const createPost = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { content, category, mood, isAnonymous } = req.body;
+    const { content, category, mood, isAnonymous, responseMode } = req.body;
     const userId = req.user?._id;
 
     if (!userId) {
@@ -31,6 +31,7 @@ export const createPost = async (
       author: userId,
       content: content.trim(),
       category: category || "general",
+      responseMode: responseMode || "open",
       mood: mood || undefined,
       isAnonymous: isAnonymous || false,
     });

@@ -1,6 +1,49 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
+// Professional profile interface
+export interface IProfessionalProfile {
+  licenseNumber: string;
+  licenseType:
+    | "psychologist"
+    | "psychiatrist"
+    | "counselor"
+    | "therapist"
+    | "social_worker"
+    | "other";
+  issuingAuthority: string;
+  verificationStatus: "pending" | "verified" | "rejected";
+  verifiedAt?: Date;
+  verifiedBy?: mongoose.Types.ObjectId;
+  rejectionReason?: string;
+  specializations: string[];
+  bio: string;
+  yearsOfExperience: number;
+  institutionAffiliation?: string;
+
+  // Rate limiting
+  dailyResponseLimit: number;
+  responsesGivenToday: number;
+  lastResponseReset: Date;
+
+  // Opt-in topics
+  optInTopics: (
+    | "anxiety"
+    | "depression"
+    | "self-care"
+    | "wellness"
+    | "general"
+  )[];
+
+  // Availability
+  isAvailable: boolean;
+  availabilitySchedule?: {
+    day: number; // 0-6 (Sunday-Saturday)
+    startHour: number; // 0-23
+    endHour: number; // 0-23
+  }[];
+}
+
 export interface IUser extends Document {
   _id: string;
   name: string;
@@ -9,12 +52,74 @@ export interface IUser extends Document {
   googleId?: string;
   avatar?: string;
   authProvider: "local" | "google";
-  role: "user" | "admin";
+  role: "user" | "professional" | "admin";
   isActive: boolean;
+
+  // Professional-specific fields
+  professionalProfile?: IProfessionalProfile;
+
+  // Privacy settings
+  dmConsent: boolean;
+
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
+
+const professionalProfileSchema = new Schema<IProfessionalProfile>(
+  {
+    licenseNumber: { type: String, required: true },
+    licenseType: {
+      type: String,
+      enum: [
+        "psychologist",
+        "psychiatrist",
+        "counselor",
+        "therapist",
+        "social_worker",
+        "other",
+      ],
+      required: true,
+    },
+    issuingAuthority: { type: String, required: true },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+    },
+    verifiedAt: { type: Date },
+    verifiedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    rejectionReason: { type: String },
+    specializations: [{ type: String }],
+    bio: { type: String, maxlength: 1000 },
+    yearsOfExperience: { type: Number, min: 0 },
+    institutionAffiliation: { type: String },
+
+    // Rate limiting
+    dailyResponseLimit: { type: Number, default: 20 },
+    responsesGivenToday: { type: Number, default: 0 },
+    lastResponseReset: { type: Date, default: Date.now },
+
+    // Opt-in topics
+    optInTopics: [
+      {
+        type: String,
+        enum: ["anxiety", "depression", "self-care", "wellness", "general"],
+      },
+    ],
+
+    // Availability
+    isAvailable: { type: Boolean, default: true },
+    availabilitySchedule: [
+      {
+        day: { type: Number, min: 0, max: 6 },
+        startHour: { type: Number, min: 0, max: 23 },
+        endHour: { type: Number, min: 0, max: 23 },
+      },
+    ],
+  },
+  { _id: false }
+);
 
 const userSchema = new Schema<IUser>(
   {
@@ -59,12 +164,20 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "professional", "admin"],
       default: "user",
     },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    professionalProfile: {
+      type: professionalProfileSchema,
+      default: undefined,
+    },
+    dmConsent: {
+      type: Boolean,
+      default: false,
     },
   },
   {

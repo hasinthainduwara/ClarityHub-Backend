@@ -65,3 +65,38 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+// Alias for authorize with additional professional verification check
+export const requireRole = (
+  ...roles: ("user" | "professional" | "admin")[]
+) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({
+        error: "Access denied. Authentication required.",
+      });
+      return;
+    }
+
+    if (!roles.includes(req.user.role as any)) {
+      res.status(403).json({
+        error: "Access denied. Insufficient permissions.",
+      });
+      return;
+    }
+
+    // Additional check for professionals - must be verified
+    if (
+      roles.includes("professional") &&
+      req.user.role === "professional" &&
+      req.user.professionalProfile?.verificationStatus !== "verified"
+    ) {
+      res.status(403).json({
+        error: "Access denied. Professional verification pending or rejected.",
+      });
+      return;
+    }
+
+    next();
+  };
+};

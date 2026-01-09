@@ -4,6 +4,7 @@ export interface IPost extends Document {
   author: mongoose.Types.ObjectId;
   content: string;
   category: "anxiety" | "depression" | "self-care" | "wellness" | "general";
+  responseMode: "open" | "listen_only" | "advice" | "encouragement";
   media?: {
     type: "image" | "video";
     url: string;
@@ -34,6 +35,11 @@ const postSchema = new Schema<IPost>(
       type: String,
       enum: ["anxiety", "depression", "self-care", "wellness", "general"],
       default: "general",
+    },
+    responseMode: {
+      type: String,
+      enum: ["open", "listen_only", "advice", "encouragement"],
+      default: "open",
     },
     media: [
       {
