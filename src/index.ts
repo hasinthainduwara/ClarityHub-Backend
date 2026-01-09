@@ -40,10 +40,14 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        "https://clarity-hub-front-end.vercel.app",
+        "https://clarity-hub-front-end-blond.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
       ];
+
+      if (process.env.CORS_ORIGIN === "*") {
+        return callback(null, true);
+      }
 
       if (process.env.CORS_ORIGIN) {
         if (process.env.CORS_ORIGIN.includes(",")) {
